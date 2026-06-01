@@ -82,12 +82,11 @@ z_sfc = float(ds24.Z.sel(Z=0, method='nearest'))
 sst24 = ds24_6h.THETA.sel(Z=z_sfc, method='nearest').compute()
 sst_levels = make_levels(sst24.values.ravel(), symmetric=False)
 
-fig, ax = plt.subplots(figsize=(11, 6))
+fig, ax = plt.subplots(figsize=(11, 6), constrained_layout=True)
 setup_ax(ax)
 add_colorbar(fig, ax, sst_levels, cmo.thermal, 'SST (°C)')
 title_txt = ax.set_title('')
 ax.contourf(xc24, yc24, sst24.isel(time=0).values, levels=sst_levels, cmap=cmo.thermal, extend='both')
-plt.tight_layout()
 
 def draw_sst(i):
     clear_ax(ax)
@@ -101,29 +100,29 @@ plt.close()
 print('Saved video_SST_tp24only.mp4')
 del sst24
 
-# ── SSH ───────────────────────────────────────────────────────────────────────
-print('\n--- SSH ---')
-ssh24 = ds24_6h.ETAN.compute()
-ssh_levels = make_levels(ssh24.values.ravel(), symmetric=True)
+# # ── SSH ───────────────────────────────────────────────────────────────────────
+# print('\n--- SSH ---')
+# ssh24 = ds24_6h.ETAN.compute()
+# ssh_levels = make_levels(ssh24.values.ravel(), symmetric=True)
 
-fig, ax = plt.subplots(figsize=(11, 6))
-setup_ax(ax)
-add_colorbar(fig, ax, ssh_levels, cmo.balance, 'SSH (m)')
-title_txt = ax.set_title('')
-ax.contourf(xc24, yc24, ssh24.isel(time=0).values, levels=ssh_levels, cmap=cmo.balance, extend='both')
-plt.tight_layout()
+# fig, ax = plt.subplots(figsize=(11, 6))
+# setup_ax(ax)
+# add_colorbar(fig, ax, ssh_levels, cmo.balance, 'SSH (m)')
+# title_txt = ax.set_title('')
+# ax.contourf(xc24, yc24, ssh24.isel(time=0).values, levels=ssh_levels, cmap=cmo.balance, extend='both')
+# plt.tight_layout()
 
-def draw_ssh(i):
-    clear_ax(ax)
-    ax.contourf(xc24, yc24, ssh24.isel(time=i).values, levels=ssh_levels, cmap=cmo.balance, extend='both')
-    title_txt.set_text(f'SSH (TPOSE24 only)  {str(t24_times[i])[:13]}')
+# def draw_ssh(i):
+#     clear_ax(ax)
+#     ax.contourf(xc24, yc24, ssh24.isel(time=i).values, levels=ssh_levels, cmap=cmo.balance, extend='both')
+#     title_txt.set_text(f'SSH (TPOSE24 only)  {str(t24_times[i])[:13]}')
 
-anim = animation.FuncAnimation(fig, draw_ssh, frames=len(t24_times), interval=150)
-print('Rendering...')
-anim.save('surface/3month/video_SSH_tp24only.mp4', writer=_writer, dpi=100)
-plt.close()
-print('Saved video_SSH_tp24only.mp4')
-del ssh24
+# anim = animation.FuncAnimation(fig, draw_ssh, frames=len(t24_times), interval=150)
+# print('Rendering...')
+# anim.save('surface/3month/video_SSH_tp24only.mp4', writer=_writer, dpi=100)
+# plt.close()
+# print('Saved video_SSH_tp24only.mp4')
+# del ssh24
 
 # ── Surface velocity ──────────────────────────────────────────────────────────
 print('\n--- Surface velocity ---')
@@ -135,7 +134,7 @@ ul = make_levels(u24.values.ravel(), symmetric=True)
 vl = make_levels(v24.values.ravel(), symmetric=True)
 wl = make_levels(w24.values.ravel(), symmetric=True)
 
-fig, axes = plt.subplots(1, 3, figsize=(24, 6))
+fig, axes = plt.subplots(1, 3, figsize=(24, 6), constrained_layout=True)
 for ax in axes:
     setup_ax(ax)
 add_colorbar(fig, axes[0], ul, cmo.balance, f'UVEL (m/s) sfc')
@@ -147,7 +146,6 @@ title_w = axes[2].set_title('', fontsize=16)
 axes[0].contourf(xg24, yc24, u24.isel(time=0).values, levels=ul, cmap=cmo.balance, extend='both')
 axes[1].contourf(xc24, yg24, v24.isel(time=0).values, levels=vl, cmap=cmo.balance, extend='both')
 axes[2].contourf(xc24, yc24, w24.isel(time=0).values, levels=wl, cmap=cmo.balance, extend='both')
-plt.tight_layout()
 
 def draw_sfc(i):
     clear_ax(axes[0]); clear_ax(axes[1]); clear_ax(axes[2])
@@ -177,7 +175,7 @@ ul = make_levels(u24.values.ravel(), symmetric=True)
 vl = make_levels(v24.values.ravel(), symmetric=True)
 wl = make_levels(w24.values.ravel(), symmetric=True)
 
-fig, axes = plt.subplots(1, 3, figsize=(24, 6))
+fig, axes = plt.subplots(1, 3, figsize=(24, 6), constrained_layout=True)
 for ax in axes:
     setup_ax(ax)
 add_colorbar(fig, axes[0], ul, cmo.balance, f'UVEL (m/s) {z_70:.0f}m')
@@ -189,7 +187,6 @@ title_w = axes[2].set_title('', fontsize=16)
 axes[0].contourf(xg24, yc24, u24.isel(time=0).values, levels=ul, cmap=cmo.balance, extend='both')
 axes[1].contourf(xc24, yg24, v24.isel(time=0).values, levels=vl, cmap=cmo.balance, extend='both')
 axes[2].contourf(xc24, yc24, w24.isel(time=0).values, levels=wl, cmap=cmo.balance, extend='both')
-plt.tight_layout()
 
 def draw_70(i):
     clear_ax(axes[0]); clear_ax(axes[1]); clear_ax(axes[2])
@@ -219,7 +216,7 @@ ul = make_levels(u24.values.ravel(), symmetric=True)
 vl = make_levels(v24.values.ravel(), symmetric=True)
 wl = make_levels(w24.values.ravel(), symmetric=True)
 
-fig, axes = plt.subplots(1, 3, figsize=(24, 6))
+fig, axes = plt.subplots(1, 3, figsize=(24, 6), constrained_layout=True)
 for ax in axes:
     setup_ax(ax)
 add_colorbar(fig, axes[0], ul, cmo.balance, f'UVEL (m/s) {z_500:.0f}m')
@@ -231,7 +228,7 @@ title_w = axes[2].set_title('', fontsize=16)
 axes[0].contourf(xg24, yc24, u24.isel(time=0).values, levels=ul, cmap=cmo.balance, extend='both')
 axes[1].contourf(xc24, yg24, v24.isel(time=0).values, levels=vl, cmap=cmo.balance, extend='both')
 axes[2].contourf(xc24, yc24, w24.isel(time=0).values, levels=wl, cmap=cmo.balance, extend='both')
-plt.tight_layout()
+
 
 def draw_500(i):
     clear_ax(axes[0]); clear_ax(axes[1]); clear_ax(axes[2])
