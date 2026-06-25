@@ -1,0 +1,31 @@
+/home/edavenport/miniforge3/envs/tpose/lib/python3.12/site-packages/xmitgcm/mds_store.py:913: UserWarning: Couldn't find available_diagnostics.log in /data/SO3/edavenport/tpose24/oct2012_TP6Vel_3month or /data/SO3/edavenport/tpose24/oct2012_TP6Vel_3month. Using default version.
+  warnings.warn("Couldn't find available_diagnostics.log "
+/home/edavenport/miniforge3/envs/tpose/lib/python3.12/site-packages/xmitgcm/mds_store.py:289: FutureWarning: In a future version, xarray will not decode the variable 'time' into a timedelta64 dtype based on the presence of a timedelta-like 'units' attribute by default. Instead it will rely on the presence of a timedelta64 'dtype' attribute, which is now xarray's default way of encoding timedelta64 values.
+To continue decoding into a timedelta64 dtype, either set `decode_timedelta=True` when opening this dataset, or add the attribute `dtype='timedelta64[ns]'` to this variable on disk.
+To opt-in to future behavior, set `decode_timedelta=False`.
+  ds['time'] = xr.decode_cf(ds[['time']])['time']
+
+SUBFOLDER : 3month
+RUN_DIR   : /data/SO3/edavenport/tpose24/oct2012_TP6Vel_3month
+CACHE_FILE: /home/edavenport/analysis/tpose24-validation/EDJ_interaction/3month/cache_edj.nc
+Files     : 727
+nz_use    : 96  (reading 75 MB per field per file)
+  1/727  (1s elapsed, ETA 777s)
+  51/727  (50s elapsed, ETA 656s)
+  101/727  (97s elapsed, ETA 604s)
+  151/727  (149s elapsed, ETA 568s)
+  201/727  (198s elapsed, ETA 518s)
+  251/727  (244s elapsed, ETA 463s)
+  301/727  (291s elapsed, ETA 412s)
+  351/727  (341s elapsed, ETA 366s)
+  401/727  (387s elapsed, ETA 315s)
+  451/727  (440s elapsed, ETA 269s)
+  501/727  (494s elapsed, ETA 223s)
+  551/727  (565s elapsed, ETA 180s)
+  601/727  (631s elapsed, ETA 132s)
+  651/727  (704s elapsed, ETA 82s)
+  701/727  (789s elapsed, ETA 29s)
+  727/727  (849s elapsed, ETA 0s)
+Extraction done in 849.4s
+Saved → /home/edavenport/analysis/tpose24-validation/EDJ_interaction/3month/cache_edj.nc
+
