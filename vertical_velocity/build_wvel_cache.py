@@ -4,6 +4,8 @@ For each model in wvel_utils.MODELS this writes one NetCDF to CACHE_DIR:
   - w_col   (time, depth)      : WVEL column at 0N, 140W  (all output times)
   - w_slice (time_anim, y, x)  : WVEL on the ANIM_DEPTH horizontal level,
                                  subsampled in time for the animation frames.
+  - w_map   (day, y, x)        : daily, thickness-weighted 0..MAP_DEPTH average
+                                 of WVEL over the cropped region.
 
 Field reads use direct big-endian memmap offsets (wvel_utils.read_*); only the
 coordinate arrays come from a short xmitgcm load. Matches the direct-read
@@ -33,12 +35,15 @@ def build_model(model):
     print(f'\n=== {model}  ({m["label"]}) ===', flush=True)
 
     coords = wu.get_coords(model)
-    xc1d, yc1d, zl = coords['xc1d'], coords['yc1d'], coords['zl']
+    xc1d, yc1d, zl, drf = coords['xc1d'], coords['yc1d'], coords['zl'], coords['drf']
     i, j = coords['i'], coords['j']
     kz = wu.nearest_k(zl, wu.ANIM_DEPTH)
+    kmap = np.where(zl >= wu.MAP_DEPTH)[0]          # levels in the 0..MAP_DEPTH layer
+    wmap = drf[kmap]                                # thickness weights for the depth average
     print(f'point 0N,140W -> i={i}, j={j} '
           f'(XC={xc1d[i]:.3f}, YC={yc1d[j]:.3f});  '
-          f'anim level k={kz} (Zl={zl[kz]:.1f} m)', flush=True)
+          f'anim level k={kz} (Zl={zl[kz]:.1f} m);  '
+          f'map layer {kmap.size} levels to {zl[kmap[-1]]:.1f} m', flush=True)
 
     iters = wu.diag_iters(model)
     times = wu.iter_times(model, iters)
@@ -55,37 +60,60 @@ def build_model(model):
     step = ANIM_STEP[m['lowres']]
     anim_idx = np.arange(0, nt, step)
 
+    # daily bins for the depth-averaged lat-lon map (m/s -> stored as float32)
+    day_of = times.astype('datetime64[D]')
+    udays = np.unique(day_of)
+    day_pos = {d: k for k, d in enumerate(udays)}
+    map_sum = np.zeros((udays.size, iy.size, ix.size))
+    map_cnt = np.zeros((udays.size, iy.size, ix.size))
+    wk = wmap[:, None, None]
+
     w_col = np.full((nt, nz), np.nan, np.float32)
     w_slice = np.full((len(anim_idx), iy.size, ix.size), np.nan, np.float32)
 
     t0 = time.time()
     a = 0
     for t, it in enumerate(iters):
-        # one sequential read of the WVEL field yields both the column and level
+        # one sequential read of the WVEL field yields the column, level and map
         fld = wu.read_field(model, int(it))
         w_col[t] = fld[:, j, i]
         if a < len(anim_idx) and t == anim_idx[a]:
             w_slice[a] = fld[kz, sy, sx]
             a += 1
+        # thickness-weighted 0..MAP_DEPTH average, accumulated into the day bin
+        sub = fld[kmap][:, sy, sx]
+        num = np.nansum(sub * wk, axis=0)
+        den = np.nansum(np.where(np.isfinite(sub), wk, 0.0), axis=0)
+        with np.errstate(invalid='ignore', divide='ignore'):
+            mp = np.where(den > 0, num / den, np.nan)
+        d = day_pos[day_of[t]]
+        map_sum[d] += np.where(np.isfinite(mp), mp, 0.0)
+        map_cnt[d] += np.isfinite(mp)
         if t % 50 == 0 or t == nt - 1:
             el = time.time() - t0
             print(f'  {t+1}/{nt}  ({el:.0f}s)', flush=True)
+
+    with np.errstate(invalid='ignore', divide='ignore'):
+        w_map = np.where(map_cnt > 0, map_sum / map_cnt, np.nan).astype(np.float32)
 
     ds = xr.Dataset(
         data_vars=dict(
             w_col=(['time', 'depth'], w_col),
             w_slice=(['time_anim', 'YC', 'XC'], w_slice),
+            w_map=(['day', 'YC', 'XC'], w_map),
         ),
         coords=dict(
             time=times,
             depth=zl.astype(float),
             time_anim=times[anim_idx],
+            day=udays,
             YC=yc1d[sy].astype(float),
             XC=xc1d[sx].astype(float),
         ),
         attrs=dict(
             model=model, label=m['label'], lowres=int(m['lowres']),
             deltaT=m['deltaT'], anim_depth_m=float(zl[kz]),
+            map_depth_m=float(zl[kmap[-1]]),
             point_lon=float(xc1d[i]), point_lat=float(yc1d[j]),
             spinup_days=wu.SPINUP_DAYS,
         ),

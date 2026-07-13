@@ -28,6 +28,8 @@ TARGET_LON = 220.0
 TARGET_LAT = 0.0
 # depth (m, negative down) of the horizontal slice used for the animations
 ANIM_DEPTH = -100.0
+# bottom of the near-surface layer averaged for the lat-lon W maps
+MAP_DEPTH = -70.0
 
 CACHE_DIR = '/data/SO3/edavenport/tpose24/cache'
 
@@ -110,9 +112,10 @@ def get_coords(model):
     xc1d = xc[0, :] if xc.ndim == 2 else xc
     yc1d = yc[:, 0] if yc.ndim == 2 else yc
     zl = np.asarray(ds.Zl.astype(float).values)
+    drf = np.asarray(ds.drF.astype(float).values)
     i = int(np.abs(xc1d - TARGET_LON).argmin())
     j = int(np.abs(yc1d - TARGET_LAT).argmin())
-    return dict(xc1d=xc1d, yc1d=yc1d, zl=zl, i=i, j=j)
+    return dict(xc1d=xc1d, yc1d=yc1d, zl=zl, drf=drf, i=i, j=j)
 
 
 def _base_offset(m):
