@@ -57,23 +57,28 @@ def discover_iters(run_dir, prefix='diag_state'):
 
 
 def load_tpose24(run_dir, prefix=('diag_state', 'diag_surf'),
-                 ref_date='2012-10-01', delta_t=300, iters=None):
+                 ref_date='2012-10-01', delta_t=300, iters=None,
+                 grid_dir=None):
     """Open a TPOSE24 run as an xarray Dataset.
 
     Parameters
     ----------
     run_dir : str
-        Run directory.  Holds both the MITgcm grid files and the
-        ``diag_*`` diagnostic output (grid_dir == data_dir for these runs).
+        Run directory holding the ``diag_*`` diagnostic output.
     prefix : sequence of str
         Diagnostic file prefixes to load (``diag_state`` holds
         THETA/SALT/UVEL/VVEL/WVEL, ``diag_surf`` holds ETAN).
     ref_date, delta_t : str, float
-        Passed to ``open_mdsdataset``; the oct2012 runs all start
-        2012-10-01 with a 300 s timestep (3-hourly output).
+        Passed to ``open_mdsdataset``; the oct2012 TPOSE24 runs all start
+        2012-10-01 with a 300 s timestep (3-hourly output).  The TPOSE6
+        parent run uses 2012-09-01 / 1200 s (daily output).
     iters : list of int, optional
         Iterations to load.  Defaults to every iteration on disk for the
         first prefix.
+    grid_dir : str, optional
+        Directory holding the MITgcm grid files.  Defaults to ``run_dir``
+        (true for the TPOSE24 runs); the TPOSE6 parent keeps its grid in a
+        separate directory.
 
     Returns
     -------
@@ -84,7 +89,7 @@ def load_tpose24(run_dir, prefix=('diag_state', 'diag_surf'),
     if iters is None:
         iters = discover_iters(run_dir, prefix[0])
     ds = open_mdsdataset(
-        data_dir=run_dir, grid_dir=run_dir,
+        data_dir=run_dir, grid_dir=grid_dir or run_dir,
         iters=iters, prefix=prefix,
         ref_date=ref_date, delta_t=delta_t,
     )
