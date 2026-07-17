@@ -8,7 +8,7 @@ Requires NASA Earthdata credentials in ~/.netrc. Run in the tpose env:
     conda run -n tpose python download_oscar.py
 """
 
-from oscar_utils import download_oscar_range
+from OSCAR_comparison.oscar_download.oscar_utils import download_oscar_range
 
 # Matches the TPOSE24 model runs (Oct 1 - Dec 30 2012).
 START_DATE = "2012-10-01"
