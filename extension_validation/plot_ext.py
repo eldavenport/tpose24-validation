@@ -119,9 +119,47 @@ def _prof_misfit(name, ovar, label, units):
     fig.savefig(p, dpi=130); plt.close(fig); print('wrote', p)
 
 
+def _daily_rmse(name, ovar):
+    """Daily RMSE & bias of model−obs over all 140°W profiles/depths that day."""
+    ds = xr.open_dataset(os.path.join(PROF_EQ, name + '_model.nc'))
+    obs = np.where(np.abs(ds[ovar + '_obs'].values) > 900, np.nan,
+                   ds[ovar + '_obs'].values)
+    diff = ds[ovar + '_model'].values - obs
+    day = ds.prof_time.values.astype('datetime64[D]')
+    days = np.unique(day)
+    rmse = np.array([np.sqrt(np.nanmean(diff[day == d] ** 2)) for d in days])
+    bias = np.array([np.nanmean(diff[day == d]) for d in days])
+    return days, rmse, bias
+
+
+def fig_prof_error_timeseries():
+    """Daily TAO 140°W temperature / U / V error vs time, with linear trend."""
+    series = [('TAO_WO_2013_CTD_daily_ED', 'prof_T', 'temperature', '°C'),
+              ('TAO_WO_2013_ADCP', 'prof_U', 'zonal velocity U', 'm s⁻¹'),
+              ('TAO_WO_2013_ADCP', 'prof_V', 'meridional velocity V', 'm s⁻¹')]
+    fig, ax = plt.subplots(3, 1, figsize=(10, 9), sharex=True)
+    for a, (name, ov, label, units) in zip(ax, series):
+        days, rmse, bias = _daily_rmse(name, ov)
+        x = days.astype('datetime64[D]').astype(int)
+        good = np.isfinite(rmse)
+        slope = np.polyfit(x[good], rmse[good], 1)[0] * 30  # per 30 days
+        a.plot(days, rmse, '-', color='#1f77b4', label='RMSE')
+        a.plot(days, bias, '-', color='#d62728', label='bias')
+        a.plot(days, np.polyval(np.polyfit(x[good], rmse[good], 1), x),
+               'k--', lw=1, label=f'RMSE trend {slope:+.3f} {units}/month')
+        a.axhline(0, color='k', lw=0.5)
+        a.set_ylabel(f'{label}\n({units})'); a.legend(fontsize=8, loc='upper left')
+    ax[-1].xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
+    ax[0].set_title('TPOSE24 − TAO 140°W daily error vs time (Jan–Apr 2013)')
+    fig.tight_layout()
+    p = os.path.join(HERE, 'ext_prof_error_timeseries.png')
+    fig.savefig(p, dpi=130); plt.close(fig); print('wrote', p)
+
+
 def main():
     fig_misfit_timeseries()
     fig_ssh_mean()
+    fig_prof_error_timeseries()
     _prof_misfit('TAO_WO_2013_CTD_daily_ED', 'prof_T', 'temperature', '°C')
     _prof_misfit('TAO_WO_2013_CTD_daily_ED', 'prof_S', 'salinity', 'g kg⁻¹')
     _prof_misfit('TAO_WO_2013_ADCP', 'prof_U', 'zonal velocity', 'm s⁻¹')
