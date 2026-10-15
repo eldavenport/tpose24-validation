@@ -30,6 +30,9 @@ TARGET_LAT = 0.0
 ANIM_DEPTH = -100.0
 # bottom of the near-surface layer averaged for the lat-lon W maps
 MAP_DEPTH = -70.0
+# deepest level the cache builder reads: the deepest WVEL figure shows -300 m,
+# so levels below READ_DEPTH are never read (big I/O cut on the full-field read).
+READ_DEPTH = -350.0
 
 CACHE_DIR = '/data/SO3/edavenport/tpose24/cache'
 
@@ -61,10 +64,27 @@ MODELS = {
     },
     'Ri7': {
         'label': 'TPOSE24 Ri7 (1/24°)',
-        'dir': '/data/SO3/edavenport/tpose24/oct2012_3month_transp_cons',
-        'grid_dir': '/data/SO3/edavenport/tpose24/oct2012_3month_transp_cons',
+        'dir': '/data/SO3/edavenport/tpose24/oct2012_3mo_dt300_AB3',
+        'grid_dir': '/data/SO3/edavenport/tpose24/oct2012_3mo_dt300_AB3',
         'NX': 512, 'NY': 384, 'NZ': 138,
         'ref_date': '2012-10-01', 'deltaT': 300.0, 'iter_step': 36,
+        'lowres': False,
+    },
+    # 6-month combined farms (parent+extension, dt60, 3-hourly -> iter_step 180)
+    'HYD6': {
+        'label': 'TPOSE24 6-month hydrostatic',
+        'dir': '/data/SO3/edavenport/tpose24/sixmonth_hydro',
+        'grid_dir': '/data/SO3/edavenport/tpose24/sixmonth_hydro',
+        'NX': 512, 'NY': 384, 'NZ': 138,
+        'ref_date': '2012-10-01', 'deltaT': 60.0, 'iter_step': 180,
+        'lowres': False,
+    },
+    'QH6': {
+        'label': 'TPOSE24 6-month quasi-hydrostatic',
+        'dir': '/data/SO3/edavenport/tpose24/sixmonth_QH',
+        'grid_dir': '/data/SO3/edavenport/tpose24/sixmonth_QH',
+        'NX': 512, 'NY': 384, 'NZ': 138,
+        'ref_date': '2012-10-01', 'deltaT': 60.0, 'iter_step': 180,
         'lowres': False,
     },
 }
@@ -122,17 +142,21 @@ def _base_offset(m):
     return REC_WVEL * m['NZ'] * m['NY'] * m['NX']
 
 
-def read_field(model, it):
-    """Full WVEL field (NZ, NY, NX) for one iteration, NaN-masked.
+def read_field(model, it, nk=None):
+    """Top ``nk`` WVEL levels (nk, NY, NX) for one iteration, NaN-masked
+    (nk=None -> all NZ levels).
 
-    Single sequential read of the WVEL record (NFS-friendly); use when both a
-    column and a horizontal level are needed from the same file.
+    WVEL levels are stored contiguously from k=0, so the top nk levels are the
+    leading nk*NY*NX elements of the record. Single sequential read of the WVEL
+    record (NFS-friendly); use when both a column and a horizontal level are
+    needed from the same file.
     """
     m = MODELS[model]
+    nz = m['NZ'] if nk is None else int(nk)
     path = os.path.join(m['dir'], f'diag_state.{it:010d}.data')
-    fld = np.fromfile(path, dtype=DT_DTYPE, count=m['NZ'] * m['NY'] * m['NX'],
+    fld = np.fromfile(path, dtype=DT_DTYPE, count=nz * m['NY'] * m['NX'],
                       offset=_base_offset(m) * 4).astype('f8')
-    fld = fld.reshape(m['NZ'], m['NY'], m['NX'])
+    fld = fld.reshape(nz, m['NY'], m['NX'])
     fld[fld == MISSING] = np.nan
     return fld
 

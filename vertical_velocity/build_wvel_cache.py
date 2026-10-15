@@ -40,6 +40,8 @@ def build_model(model):
     kz = wu.nearest_k(zl, wu.ANIM_DEPTH)
     kmap = np.where(zl >= wu.MAP_DEPTH)[0]          # levels in the 0..MAP_DEPTH layer
     wmap = drf[kmap]                                # thickness weights for the depth average
+    nk = wu.nearest_k(zl, wu.READ_DEPTH) + 1        # read only to READ_DEPTH (deepest figure is -300 m)
+    assert nk > kz and nk > kmap[-1], 'READ_DEPTH too shallow for anim/map layers'
     print(f'point 0N,140W -> i={i}, j={j} '
           f'(XC={xc1d[i]:.3f}, YC={yc1d[j]:.3f});  '
           f'anim level k={kz} (Zl={zl[kz]:.1f} m);  '
@@ -68,14 +70,14 @@ def build_model(model):
     map_cnt = np.zeros((udays.size, iy.size, ix.size))
     wk = wmap[:, None, None]
 
-    w_col = np.full((nt, nz), np.nan, np.float32)
+    w_col = np.full((nt, nk), np.nan, np.float32)
     w_slice = np.full((len(anim_idx), iy.size, ix.size), np.nan, np.float32)
 
     t0 = time.time()
     a = 0
     for t, it in enumerate(iters):
         # one sequential read of the WVEL field yields the column, level and map
-        fld = wu.read_field(model, int(it))
+        fld = wu.read_field(model, int(it), nk=nk)
         w_col[t] = fld[:, j, i]
         if a < len(anim_idx) and t == anim_idx[a]:
             w_slice[a] = fld[kz, sy, sx]
@@ -104,7 +106,7 @@ def build_model(model):
         ),
         coords=dict(
             time=times,
-            depth=zl.astype(float),
+            depth=zl[:nk].astype(float),
             time_anim=times[anim_idx],
             day=udays,
             YC=yc1d[sy].astype(float),

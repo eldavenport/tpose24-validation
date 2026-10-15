@@ -15,7 +15,9 @@ import pandas as pd
 import xmitgcm
 
 SUBFOLDER  = sys.argv[1] if len(sys.argv) > 1 else '3month_Ri5'
-RUN_DIR    = f'/data/SO3/edavenport/tpose24/oct2012_TP6Vel_{SUBFOLDER}'
+RUN_DIR    = os.environ.get('TPOSE_RUN_DIR',
+                            f'/data/SO3/edavenport/tpose24/oct2012_TP6Vel_{SUBFOLDER}')
+DELTA_T    = float(os.environ.get('TPOSE_DELTAT', 300))   # 6-month farm is dt60
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 SAVE_DIR   = os.path.join(SCRIPT_DIR, SUBFOLDER)
 CACHE_FILE = os.path.join(SAVE_DIR, 'cache_edj_full.nc')
@@ -40,8 +42,15 @@ IY_1S = 108
 data_files = sorted(glob.glob(f'{RUN_DIR}/diag_state.*.data'))
 iters      = np.array([int(re.search(r'\.(\d+)\.data', f).group(1)) for f in data_files])
 t_mod      = pd.DatetimeIndex(
-    [pd.Timestamp('2012-10-01') + pd.Timedelta(seconds=int(i) * 300) for i in iters])
+    [pd.Timestamp('2012-10-01') + pd.Timedelta(seconds=int(i) * DELTA_T) for i in iters])
 n_t = len(data_files)
+
+# Equatorial deep jets are low-frequency; one profile per calendar day is plenty.
+# Pass --full to keep native (3-hourly) cadence.
+if '--full' not in sys.argv:
+    keep = np.unique(t_mod.floor('D'), return_index=True)[1]
+    data_files = [data_files[k] for k in keep]
+    iters, t_mod, n_t = iters[keep], t_mod[keep], len(keep)
 
 print(f'SUBFOLDER : {SUBFOLDER}')
 print(f'RUN_DIR   : {RUN_DIR}')

@@ -12,7 +12,9 @@ import xarray as xr
 import pandas as pd
 
 SUBFOLDER  = sys.argv[1] if len(sys.argv) > 1 else '3month_Ri5'
-RUN_DIR    = f'/data/SO3/edavenport/tpose24/oct2012_TP6Vel_{SUBFOLDER}'
+RUN_DIR    = os.environ.get('TPOSE_RUN_DIR',
+                            f'/data/SO3/edavenport/tpose24/oct2012_TP6Vel_{SUBFOLDER}')
+DELTA_T    = float(os.environ.get('TPOSE_DELTAT', 300))   # 6-month farm is dt60
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 SAVE_DIR   = os.path.join(SCRIPT_DIR, SUBFOLDER)
 CACHE_FILE = os.path.join(SAVE_DIR, 'cache_model_points_V.nc')
@@ -34,7 +36,7 @@ FIELD_OFFSET = I_VVEL * NZ * NY * NX * 4
 data_files = sorted(glob.glob(f'{RUN_DIR}/diag_state.*.data'))
 iters      = np.array([int(re.search(r'\.(\d+)\.data', f).group(1)) for f in data_files])
 t_mod      = pd.DatetimeIndex(
-    [pd.Timestamp('2012-10-01') + pd.Timedelta(seconds=int(i) * 300) for i in iters])
+    [pd.Timestamp('2012-10-01') + pd.Timedelta(seconds=int(i) * DELTA_T) for i in iters])
 n_t = len(data_files)
 
 print(f'SUBFOLDER : {SUBFOLDER}')
