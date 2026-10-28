@@ -36,7 +36,7 @@ FIELD_OFFSET = I_VVEL * NZ * NY * NX * 4
 data_files = sorted(glob.glob(f'{RUN_DIR}/diag_state.*.data'))
 iters      = np.array([int(re.search(r'\.(\d+)\.data', f).group(1)) for f in data_files])
 t_mod      = pd.DatetimeIndex(
-    [pd.Timestamp('2012-10-01') + pd.Timedelta(seconds=int(i) * DELTA_T) for i in iters])
+    [pd.Timestamp(os.environ.get('TPOSE_REF_DATE', '2012-10-01')) + pd.Timedelta(seconds=int(i) * DELTA_T) for i in iters])
 n_t = len(data_files)
 
 print(f'SUBFOLDER : {SUBFOLDER}')

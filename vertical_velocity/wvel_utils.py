@@ -87,6 +87,14 @@ MODELS = {
         'ref_date': '2012-10-01', 'deltaT': 60.0, 'iter_step': 180,
         'lowres': False,
     },
+    'APR24': {
+        'label': 'TPOSE24 Apr-Jun 2013',
+        'dir': '/data/SO3/edavenport/tpose24/april2013_3mo_dt60',
+        'grid_dir': '/data/SO3/edavenport/tpose24/april2013_3mo_dt60',
+        'NX': 512, 'NY': 384, 'NZ': 138,
+        'ref_date': '2013-04-01', 'deltaT': 60.0, 'iter_step': 180,
+        'lowres': False,
+    },
 }
 
 # order used everywhere: low-res first, then the three high-res runs

@@ -57,7 +57,7 @@ def discover_iters(run_dir, prefix='diag_state'):
 
 
 def load_tpose24(run_dir, prefix=('diag_state', 'diag_surf'),
-                 ref_date='2012-10-01', delta_t=300, iters=None,
+                 ref_date=None, delta_t=300, iters=None,
                  grid_dir=None):
     """Open a TPOSE24 run as an xarray Dataset.
 
@@ -86,6 +86,8 @@ def load_tpose24(run_dir, prefix=('diag_state', 'diag_surf'),
         With float64 horizontal/vertical coordinates.
     """
     prefix = list(prefix)
+    if ref_date is None:
+        ref_date = os.environ.get('TPOSE_REF_DATE', '2012-10-01')
     if iters is None:
         iters = discover_iters(run_dir, prefix[0])
     ds = open_mdsdataset(

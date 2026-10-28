@@ -43,12 +43,19 @@ def clear_ax(ax):
 
 # ── Load TPOSE24 ──────────────────────────────────────────────────────────────
 print('Loading TPOSE24...')
-run24 = '/data/SO3/edavenport/tpose24/oct2012_TP6Vel_3month'
+import glob, re
+run24   = os.environ.get('TPOSE_RUN_DIR', '/data/SO3/edavenport/tpose24/sixmonth_hydro')
+OUT_SUB = os.environ.get('TPOSE_OUT_SUB', 'sixmonth')
+DELTA_T = float(os.environ.get('TPOSE_DELTAT', 60))
+for _d in ('surface', 'velocity'):
+    os.makedirs(f'{_d}/{OUT_SUB}', exist_ok=True)
+_its = sorted(int(re.search(r'\.(\d+)\.data$', f).group(1))
+              for f in glob.glob(run24 + '/diag_state.*.data'))
 ds24 = open_mdsdataset(
     data_dir=run24, grid_dir=run24,
-    iters=list(range(36, 26173, 36)),
+    iters=_its,
     prefix=['diag_state', 'diag_surf'],
-    ref_date='2012-10-01', delta_t=300,
+    ref_date='2012-10-01', delta_t=DELTA_T,
 )
 for c in ('XC', 'YC', 'Z', 'Zl', 'XG', 'YG'):
     if c in ds24.coords:
@@ -95,7 +102,7 @@ def draw_sst(i):
 
 anim = animation.FuncAnimation(fig, draw_sst, frames=len(t24_times), interval=150)
 print('Rendering...')
-anim.save('surface/3month/video_SST_tp24only.mp4', writer=_writer, dpi=100)
+anim.save(f'surface/{OUT_SUB}/video_SST_tp24only.mp4', writer=_writer, dpi=100)
 plt.close()
 print('Saved video_SST_tp24only.mp4')
 del sst24
@@ -119,7 +126,7 @@ del sst24
 
 # anim = animation.FuncAnimation(fig, draw_ssh, frames=len(t24_times), interval=150)
 # print('Rendering...')
-# anim.save('surface/3month/video_SSH_tp24only.mp4', writer=_writer, dpi=100)
+# anim.save(f'surface/{OUT_SUB}/video_SSH_tp24only.mp4', writer=_writer, dpi=100)
 # plt.close()
 # print('Saved video_SSH_tp24only.mp4')
 # del ssh24
@@ -159,7 +166,7 @@ def draw_sfc(i):
 
 anim = animation.FuncAnimation(fig, draw_sfc, frames=len(t24_times), interval=150)
 print('Rendering...')
-anim.save('velocity/3month/video_velocity_surface_tp24only.mp4', writer=_writer, dpi=100)
+anim.save(f'velocity/{OUT_SUB}/video_velocity_surface_tp24only.mp4', writer=_writer, dpi=100)
 plt.close()
 print('Saved video_velocity_surface_tp24only.mp4')
 del u24, v24, w24
@@ -200,7 +207,7 @@ def draw_70(i):
 
 anim = animation.FuncAnimation(fig, draw_70, frames=len(t24_times), interval=150)
 print('Rendering...')
-anim.save('velocity/3month/video_velocity_70m_tp24only.mp4', writer=_writer, dpi=100)
+anim.save(f'velocity/{OUT_SUB}/video_velocity_70m_tp24only.mp4', writer=_writer, dpi=100)
 plt.close()
 print('Saved video_velocity_70m_tp24only.mp4')
 del u24, v24, w24
@@ -242,7 +249,7 @@ def draw_500(i):
 
 anim = animation.FuncAnimation(fig, draw_500, frames=len(t24_times), interval=150)
 print('Rendering...')
-anim.save('velocity/3month/video_velocity_500m_tp24only.mp4', writer=_writer, dpi=100)
+anim.save(f'velocity/{OUT_SUB}/video_velocity_500m_tp24only.mp4', writer=_writer, dpi=100)
 plt.close()
 print('Saved video_velocity_500m_tp24only.mp4')
 del u24, v24, w24

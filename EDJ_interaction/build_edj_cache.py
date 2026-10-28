@@ -42,7 +42,7 @@ IY_1S = 108   # YC ≈ -0.98°N
 data_files = sorted(glob.glob(f'{RUN_DIR}/diag_state.*.data'))
 iters      = np.array([int(re.search(r'\.(\d+)\.data', f).group(1)) for f in data_files])
 t_mod      = pd.DatetimeIndex(
-    [pd.Timestamp('2012-10-01') + pd.Timedelta(seconds=int(i) * DELTA_T) for i in iters])
+    [pd.Timestamp(os.environ.get('TPOSE_REF_DATE', '2012-10-01')) + pd.Timedelta(seconds=int(i) * DELTA_T) for i in iters])
 n_t = len(data_files)
 
 # Equatorial deep jets are low-frequency; one profile per calendar day is plenty.

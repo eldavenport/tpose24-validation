@@ -3,13 +3,16 @@
 # env-driven (TPOSE_RUN_DIR / TPOSE_OUT_SUB / TPOSE_DELTAT).  Figures land in
 # <check>/<out_sub>/.  Videos are NOT included here (run separately, hydro only).
 #
-# Usage: run_full_suite.sh <run_dir> <out_sub> <wvel_model>
+# Usage: run_full_suite.sh <run_dir> <out_sub> <wvel_model> [ref_date] [tp6_baseline]
 #   e.g. run_full_suite.sh /data/SO3/edavenport/tpose24/sixmonth_QH sixmonth_QH QH6
+#        run_full_suite.sh /data/SO3/edavenport/tpose24/april2013_3mo_dt60 april2013 APR24 2013-04-01 1
+# tp6_baseline: non-empty => overlay TPOSE6 mar2013 in the gridded-obs notebooks.
+#   Only for runs that span Mar-Jul 2013 (else the TP6 time axis won't match).
 set -u
 REPO=/home/edavenport/analysis/tpose24-validation
 cd "$REPO"
-RUN_DIR=$1; OUT_SUB=$2; WMODEL=$3
-export TPOSE_RUN_DIR=$RUN_DIR TPOSE_OUT_SUB=$OUT_SUB TPOSE_DELTAT=60 TPOSE_WVEL_MODEL=$WMODEL
+RUN_DIR=$1; OUT_SUB=$2; WMODEL=$3; REF_DATE=${4:-2012-10-01}; TP6=${5:-}
+export TPOSE_RUN_DIR=$RUN_DIR TPOSE_OUT_SUB=$OUT_SUB TPOSE_DELTAT=60 TPOSE_WVEL_MODEL=$WMODEL TPOSE_REF_DATE=$REF_DATE TPOSE_TP6_BASELINE=$TP6
 K="--ExecutePreprocessor.timeout=7200 --ExecutePreprocessor.kernel_name=tpose"
 nb () { echo ">>> nbconvert $1"; conda run -n tpose jupyter nbconvert --to notebook \
   --execute --inplace $K "$1" 2>&1 | grep -iE "error|traceback|Writing" | head -3 || echo "FAIL $1"; }

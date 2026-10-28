@@ -24,8 +24,8 @@ import xarray as xr
 
 PROF_DIR = '/data/SO3/edavenport/tpose24/profiles'
 LON0, LON1, LAT0, LAT1 = 209.35, 230.65, -5.48, 10.48
-T0, T1 = np.datetime64('2012-10-01'), np.datetime64('2013-04-01')
-REF = np.datetime64('2012-10-01')
+REF = np.datetime64(os.environ.get('TPOSE_REF_DATE', '2012-10-01'))
+DELTA_T = int(float(os.environ.get('TPOSE_DELTAT', 60)))
 DT, MISS = '>f4', -999.0
 NZ, NY, NX = 138, 384, 512
 NFLDS = 7
@@ -51,7 +51,7 @@ def model_timeline(run_dir):
     its = sorted(int(re.search(r'\.(\d+)\.data$', f).group(1))
                  for f in glob.glob(os.path.join(run_dir, 'diag_state.*.data')))
     its = np.array(its)
-    t = REF.astype('datetime64[s]') + (its * 60).astype('timedelta64[s]')
+    t = REF.astype('datetime64[s]') + (its * DELTA_T).astype('timedelta64[s]')
     return its, t
 
 
@@ -68,8 +68,12 @@ def obs_times(ds):
 def main(run_dir, out_dir):
     lon1d, lat1d, z = load_grid(run_dir)
     its, mt = model_timeline(run_dir)
+    # validation window = model output span (obs outside it are dropped)
+    T0 = mt[0].astype('datetime64[D]')
+    T1 = mt[-1].astype('datetime64[D]') + np.timedelta64(1, 'D')
     os.makedirs(out_dir, exist_ok=True)
-    print(f'farm {run_dir}: {len(its)} outputs {str(mt[0])[:10]}..{str(mt[-1])[:10]}')
+    print(f'run {run_dir}: {len(its)} outputs {str(mt[0])[:10]}..{str(mt[-1])[:10]} '
+          f'window {str(T0)}..{str(T1)}')
 
     for name, (f12, f13, varmap) in JOBS.items():
         d12 = xr.open_dataset(os.path.join(PROF_DIR, f12), decode_times=False)
